@@ -1,7 +1,8 @@
 // content.js
-// Phase 3: Module 1 - Form Filling
+// Module 1 (Form Filling) + Module 3 (Page Summarization).
 // Scans the page for form fields, matches them against the saved profile,
 // shows a floating preview panel, and fills the form on approval.
+// Also extracts page text and shows an LLM-generated summary.
 
 console.log("[content] script injected into this page");
 
@@ -11,6 +12,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === "SCAN_FORM") {
     scanAndShowOverlay();
+    sendResponse({ started: true });
+  }
+  if (message.type === "SUMMARIZE_PAGE") {
+    summarizeAndShowOverlay();
     sendResponse({ started: true });
   }
 });
@@ -44,8 +49,9 @@ async function buildFieldPlan() {
   const profileKeys = Array.from(
     new Set([...KNOWN_PROFILE_KEYS, ...Object.keys(profile)])
   );
+
   // Parallel, not sequential — a 20-field form used to mean 20 back-to-back
-  // Ollama round trips (~60s of frozen UI). Now they overlap.
+  // LLM round trips (~60s of frozen UI). Now they overlap.
   const plan = await Promise.all(
     fields.map(async (el, index) => {
       let matchedKey = matchFieldToProfileKey(el);
@@ -95,7 +101,7 @@ async function askLLMToMatchField(clueText, profileKeys) {
 // ---- 3. SHOW OVERLAY PANEL ----
 async function scanAndShowOverlay() {
   removeExistingOverlay();
-  showLoadingOverlay();
+  showLoadingOverlay("Scanning page…", "Matching fields against your profile.");
 
   let plan;
   try {
@@ -170,11 +176,14 @@ async function scanAndShowOverlay() {
   overlay.querySelector("#aibrowser-fill-btn").addEventListener("click", () => handleFillClick(plan));
 }
 
-// Simple "working…" panel so the LLM round trips don't look like a hang.
-function showLoadingOverlay(title = "Scanning page…", subtitle = "Matching fields against your profile.") {
+// Shared "working…" panel so the LLM round trips don't look like a hang.
+function showLoadingOverlay(title = "Working…", subtitle = "") {
   const loader = document.createElement("div");
   loader.id = "aibrowser-overlay";
-  loader.innerHTML = `<h3>${escapeHtml(title)}</h3><div style="color:#666;">${escapeHtml(subtitle)}</div>`;
+  loader.innerHTML = `
+    <h3>${escapeHtml(title)}</h3>
+    <div style="color:#666;">${escapeHtml(subtitle)}</div>
+  `;
   document.body.appendChild(loader);
 }
 
@@ -236,19 +245,20 @@ function setNativeFieldValue(element, value) {
   element.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
-if (message.type === "SUMMARIZE_PAGE") {
-    summarizeAndShowOverlay();
-    sendResponse({ started: true });
-  }
-
-  // ---- 5. SUMMARIZE ----
+// ---- 5. SUMMARIZE ----
 function extractPageText() {
-  // Prefer the semantic content containers; fall back to the whole body.
+  // Prefer semantic content containers so we don't feed nav/footer junk to
+  // the model; fall back to the whole body when the page has no <article>.
   const candidate =
     document.querySelector("article") ||
     document.querySelector("main") ||
     document.body;
-  return (candidate.innerText || "").replace(/\s+\n/g, "\n").trim();
+
+  // Strip script/style leftovers and collapse runaway whitespace.
+  return (candidate.innerText || "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 async function summarizeAndShowOverlay() {
@@ -279,9 +289,7 @@ async function summarizeAndShowOverlay() {
   overlay.id = "aibrowser-overlay";
   overlay.innerHTML = `
     <h3>Page Summary <span id="aibrowser-close-x">✕</span></h3>
-    <div id="aibrowser-summary-body">${
-      summary ? escapeHtml(summary) : "Could not generate a summary — check the service worker console."
-    }</div>
+    <div id="aibrowser-summary-body"></div>
     <div class="aibrowser-btn-row">
       <button id="aibrowser-copy-btn">Copy</button>
       <button id="aibrowser-cancel-btn">Close</button>
@@ -289,9 +297,24 @@ async function summarizeAndShowOverlay() {
   `;
   document.body.appendChild(overlay);
 
+  // Set as text, not innerHTML — the summary is model output going onto an
+  // arbitrary page, so it never gets parsed as markup.
+  overlay.querySelector("#aibrowser-summary-body").innerText = summary
+    ? summary
+    : "Could not generate a summary — check the service worker console.";
+
   overlay.querySelector("#aibrowser-close-x").addEventListener("click", removeExistingOverlay);
   overlay.querySelector("#aibrowser-cancel-btn").addEventListener("click", removeExistingOverlay);
-  overlay.querySelector("#aibrowser-copy-btn").addEventListener("click", () => {
-    if (summary) navigator.clipboard.writeText(summary);
+
+  const copyBtn = overlay.querySelector("#aibrowser-copy-btn");
+  copyBtn.addEventListener("click", async () => {
+    if (!summary) return;
+    try {
+      await navigator.clipboard.writeText(summary);
+      copyBtn.textContent = "Copied";
+      setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+    } catch (err) {
+      console.warn("[content] clipboard write failed:", err);
+    }
   });
 }

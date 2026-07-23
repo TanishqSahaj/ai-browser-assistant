@@ -7,7 +7,7 @@ importScripts("llm.js");
 console.log("[background] service worker started");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("[background] got message:", message);
+  console.log("[background] got message:", message.type);
 
   if (message.type === "PING_FROM_POPUP") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -59,9 +59,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true;
   }
-});
 
-if (message.type === "LLM_SUMMARIZE") {
+  if (message.type === "LLM_SUMMARIZE") {
     llmSummarize(message.pageText)
       .then((summary) => sendResponse({ summary }))
       .catch((err) => {
@@ -70,3 +69,4 @@ if (message.type === "LLM_SUMMARIZE") {
       });
     return true;
   }
+});

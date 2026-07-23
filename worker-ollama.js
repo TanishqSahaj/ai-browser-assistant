@@ -1,6 +1,6 @@
 // worker-ollama.js
-// Cloudflare Worker — holds your Ollama Cloud API key, proxies the same two
-// fixed tasks (match_field, generate_answer) that llm.js expects.
+// Cloudflare Worker — holds your Ollama Cloud API key, proxies the fixed
+// tasks (match_field, generate_answer, summarize) that llm.js expects.
 // Only needed if you set LLM_PROVIDER = "ollama-cloud" in llm.js.
 //
 // Deploy steps:
@@ -9,9 +9,9 @@
 //   3. wrangler deploy --config wrangler-ollama.toml
 //   4. Copy the printed URL into llm.js -> OLLAMA_CLOUD_BACKEND_URL
 
-// Cloud model names carry a "-cloud" suffix. Check ollama.com/library for
-// what's currently offered — if you get a 502 with a model-not-found detail,
-// this constant is the thing to change.
+// NOTE: gpt-oss is a reasoning model — it emits internal reasoning before the
+// real answer. That's why maxTokens is generous even for one-word tasks; at
+// 10 tokens the reasoning ate the whole budget and content came back empty.
 const OLLAMA_CLOUD_MODEL = "gpt-oss:20b-cloud";
 
 export default {
@@ -52,7 +52,7 @@ export default {
         `Field clue text: "${input.clueText}"\n` +
         `Valid profile keys: ${(input.profileKeys || []).join(", ")}\n` +
         "Answer:";
-       maxTokens = 200;
+      maxTokens = 200;
     } else if (task === "generate_answer") {
       prompt =
         "You write short first-person answers to application-form questions using ONLY the facts " +
@@ -60,9 +60,8 @@ export default {
         `Question: "${input.question}"\n` +
         `Profile facts: ${JSON.stringify(input.profile)}\n` +
         "Answer:";
-      maxTokens = 200;
-    } 
-    else if (task === "summarize") {
+      maxTokens = 400;
+    } else if (task === "summarize") {
       prompt =
         "Summarize the page content below. Output exactly this structure, no markdown, no preamble:\n" +
         "TLDR: one sentence\n" +
@@ -70,9 +69,8 @@ export default {
         "TAGS: three to five comma-separated tags\n\n" +
         "PAGE CONTENT:\n" +
         String(input.pageText || "").slice(0, 6000);
-      maxTokens = 600;
-    }
-    else {
+      maxTokens = 800;
+    } else {
       return jsonResponse({ error: `Unknown task: ${task}` }, 400, corsHeaders);
     }
 

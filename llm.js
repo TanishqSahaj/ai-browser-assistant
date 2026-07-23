@@ -19,11 +19,9 @@ const LLM_PROVIDER = "ollama-cloud"; // "ollama" | "ollama-cloud" | "huggingface
 
 // --- Local Ollama settings (only used when LLM_PROVIDER === "ollama") ---
 const OLLAMA_URL = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "qwen3.5:27b"; // any model you've pulled: `ollama list`
+const OLLAMA_MODEL = "llama3.2:3b"; // any model you've pulled: `ollama list`
 
 // --- Ollama Cloud settings (only used when LLM_PROVIDER === "ollama-cloud") ---
-// Must point at your deployed worker-ollama.js, NOT at ollama.com directly —
-// the Worker is what holds your API key.
 const OLLAMA_CLOUD_BACKEND_URL = "https://ai-browser-assistant-ollama.ai-browser-tanishq.workers.dev";
 
 // --- Hugging Face settings (only used when LLM_PROVIDER === "huggingface") ---
@@ -35,20 +33,6 @@ const HF_BACKEND_URL = "https://ai-browser-assistant-hf.ai-browser-tanishq.worke
 // paths, the Worker builds the prompt server-side instead — don't let the
 // caller send an arbitrary system prompt to something holding your key.
 // ---------------------------------------------------------------------------
-
-async function llmSummarize(pageText) {
-  const localPrompt =
-    "Summarize the page content below. Output exactly this structure, no markdown, no preamble:\n" +
-    "TLDR: one sentence\n" +
-    "KEY POINTS:\n- point\n- point\n- point\n" +
-    "TAGS: three to five comma-separated tags\n\n" +
-    "PAGE CONTENT:\n" + String(pageText || "").slice(0, 6000);
-
-  const { result, error } = await callProvider("summarize", localPrompt, { pageText });
-
-  if (error) return null;
-  return result || null;
-}
 
 function buildMatchFieldPrompt(clueText, profileKeys) {
   return (
@@ -69,6 +53,17 @@ function buildGenerateAnswerPrompt(question, profile) {
     `Question: "${question}"\n` +
     `Profile facts: ${JSON.stringify(profile)}\n` +
     "Answer:"
+  );
+}
+
+function buildSummarizePrompt(pageText) {
+  return (
+    "Summarize the page content below. Output exactly this structure, no markdown, no preamble:\n" +
+    "TLDR: one sentence\n" +
+    "KEY POINTS:\n- point\n- point\n- point\n" +
+    "TAGS: three to five comma-separated tags\n\n" +
+    "PAGE CONTENT:\n" +
+    String(pageText || "").slice(0, 6000)
   );
 }
 
@@ -128,7 +123,7 @@ async function callWorkerBackend(backendUrl, label, task, input) {
   }
 }
 
-// Routes a task to whichever provider is configured. Both public functions
+// Routes a task to whichever provider is configured. All public functions
 // use this, so adding a provider later means editing one place.
 async function callProvider(task, localPrompt, input) {
   if (LLM_PROVIDER === "ollama") {
@@ -166,6 +161,17 @@ async function llmGenerateAnswer(question, profile) {
     "generate_answer",
     buildGenerateAnswerPrompt(question, profile),
     { question, profile }
+  );
+
+  if (error) return null;
+  return result || null;
+}
+
+async function llmSummarize(pageText) {
+  const { result, error } = await callProvider(
+    "summarize",
+    buildSummarizePrompt(pageText),
+    { pageText }
   );
 
   if (error) return null;

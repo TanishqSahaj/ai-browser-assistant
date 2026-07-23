@@ -1,18 +1,28 @@
 // popup.js
-// Talks ONLY to the background worker (never directly to the content script)
-// for the ping path; SCAN_FORM goes straight to the tab.
+// Runs when the popup window is open. SCAN_FORM and SUMMARIZE_PAGE go
+// straight to the tab's content script; PING goes via the background worker.
 
-document.getElementById("scanBtn").addEventListener("click", () => {
+// Both page actions do the same thing apart from the message type, so they
+// share one helper.
+function sendToActiveTab(messageType, failureText) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, { type: "SCAN_FORM" }, () => {
+    if (!tabs[0]) return;
+    chrome.tabs.sendMessage(tabs[0].id, { type: messageType }, () => {
       if (chrome.runtime.lastError) {
-        document.getElementById("result").textContent =
-          "Can't scan this page — try a normal http(s) page.";
+        document.getElementById("result").textContent = failureText;
         return;
       }
       window.close(); // close popup so the user can see the overlay
     });
   });
+}
+
+document.getElementById("scanBtn").addEventListener("click", () => {
+  sendToActiveTab("SCAN_FORM", "Can't scan this page — try a normal http(s) page.");
+});
+
+document.getElementById("summarizeBtn").addEventListener("click", () => {
+  sendToActiveTab("SUMMARIZE_PAGE", "Can't summarize this page — try a normal http(s) page.");
 });
 
 document.getElementById("openProfile").addEventListener("click", (e) => {
@@ -30,18 +40,5 @@ document.getElementById("pingBtn").addEventListener("click", () => {
       return;
     }
     resultDiv.textContent = `Title: "${response.title}"\nURL: ${response.url}`;
-  });
-});
-
-document.getElementById("summarizeBtn").addEventListener("click", () => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, { type: "SUMMARIZE_PAGE" }, () => {
-      if (chrome.runtime.lastError) {
-        document.getElementById("result").textContent =
-          "Can't summarize this page — try a normal http(s) page.";
-        return;
-      }
-      window.close();
-    });
   });
 });
