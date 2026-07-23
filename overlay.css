@@ -1,0 +1,115 @@
+/* overlay.css - styles for the floating preview panel injected onto the page */
+/* Prefixed with aibrowser- to avoid clashing with the host page's own CSS */
+
+#aibrowser-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  z-index: 2147483647; /* max possible, so it sits above everything on the page */
+  font-family: -apple-system, Arial, sans-serif;
+  font-size: 13px;
+  color: #222;
+  padding: 14px;
+}
+
+#aibrowser-overlay h3 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+.aibrowser-field-row {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.aibrowser-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  display: flex;
+  justify-content: space-between;
+}
+
+.aibrowser-field-label .aibrowser-tag-matched {
+  color: #16a34a;
+}
+
+.aibrowser-field-label .aibrowser-tag-missing {
+  color: #dc2626;
+}
+
+.aibrowser-field-label .aibrowser-tag-llm {
+  color: #7c3aed; /* purple, so an AI-guessed match reads differently from a plain keyword match */
+}
+
+.aibrowser-field-row input {
+  width: 100%;
+  padding: 6px;
+  font-size: 12px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.aibrowser-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.aibrowser-btn-row button {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#aibrowser-fill-btn {
+  background: #4f46e5;
+  color: white;
+}
+
+#aibrowser-cancel-btn {
+  background: #eee;
+  color: #333;
+}
+
+#aibrowser-close-x {
+  cursor: pointer;
+  font-weight: normal;
+  color: #999;
+}
+
+/* Purple applies to both matched and unmatched AI results, so it must win
+   over the green/red base colors — hence the ordering here. */
+.aibrowser-field-label .aibrowser-tag-llm {
+  color: #7c3aed;
+}
+
+#aibrowser-overlay h3 + div {
+  font-size: 12px;
+}
+
+#aibrowser-summary-body {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+#aibrowser-copy-btn {
+  background: #eee;
+  color: #333;
+}

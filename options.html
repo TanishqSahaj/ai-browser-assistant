@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Browser Assistant — Profile</title>
+  <style>
+    body {
+      font-family: -apple-system, Arial, sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      color: #222;
+    }
+    h1 { font-size: 20px; }
+    p.sub { color: #666; font-size: 13px; margin-top: -8px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 14px;
+      margin-bottom: 4px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your Profile</h1>
+  <p class="sub">Saved once, used everywhere — forms, emails, and more will pull from this.</p>
+
+  <label for="fullName">Full name</label>
+  <input type="text" id="fullName" placeholder="Jane Doe" />
+
+  <label for="email">Email</label>
+  <input type="email" id="email" placeholder="jane@example.com" />
+
+  <label for="phone">Phone</label>
+  <input type="text" id="phone" placeholder="+91 98765 43210" />
+
+  <label for="college">College / University</label>
+  <input type="text" id="college" placeholder="XYZ Institute of Technology" />
+
+  <label for="degree">Degree</label>
+  <input type="text" id="degree" placeholder="B.Tech Computer Science" />
+
+  <label for="gradYear">Graduation year</label>
+  <input type="text" id="gradYear" placeholder="2027" />
+
+  <label for="city">City</label>
+  <input type="text" id="city" placeholder="Mumbai" />
+
+  <label for="linkedin">LinkedIn URL</label>
+  <input type="text" id="linkedin" placeholder="https://linkedin.com/in/janedoe" />
+
+  <label for="github">GitHub username</label>
+  <input type="text" id="github" placeholder="octocat" />
+
+  <label for="bio">Short bio (used for "why should we hire you" style questions)</label>
+  <textarea id="bio" rows="4" placeholder="A brief 2-3 sentence bio about yourself..."></textarea>
+
+  <button id="saveBtn">Save Profile</button>
+  <div id="status"></div>
+
+  <script src="storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
