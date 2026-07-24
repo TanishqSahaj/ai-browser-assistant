@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Inbox Digest</title>
+  <style>
+    body {
+      font-family: -apple-system, Arial, sans-serif;
+      max-width: 640px;
+      margin: 40px auto;
+      color: #222;
+      padding: 0 20px;
+    }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.sub { color: #666; font-size: 13px; margin-top: 0; }
+    #digest {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 14px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4f46e5;
+      color: white;
+      margin-right: 8px;
+    }
+    button.secondary { background: #eee; color: #333; }
+    #controls { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Inbox Digest</h1>
+  <p class="sub">Recent unread mail, triaged.</p>
+
+  <div id="controls">
+    <button id="refreshBtn">Refresh</button>
+    <button id="copyBtn" class="secondary">Copy</button>
+  </div>
+
+  <div id="digest">Loading…</div>
+
+  <script src="digest.js"></script>
+</body>
+</html>

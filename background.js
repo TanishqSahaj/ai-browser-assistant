@@ -1,8 +1,8 @@
-// background.js
+﻿// background.js
 // Runs in the background, separately from any webpage.
 // Listens for messages and responds — the pattern every module reuses.
 
-importScripts("llm.js", "auth.js");
+importScripts("llm.js", "auth.js", "gmail.js");
 
 console.log("[background] service worker started");
 
@@ -22,8 +22,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         activeTab.id,
         { type: "GET_PAGE_TITLE" },
         (contentResponse) => {
-          // Without this guard the popup hangs forever on pages where no
-          // content script is injected (chrome://, the Web Store, PDFs).
           if (chrome.runtime.lastError) {
             console.warn("[background] no content script:", chrome.runtime.lastError.message);
             sendResponse({
@@ -37,7 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       );
     });
 
-    return true; // keep the message channel open for the async response
+    return true;
   }
 
   if (message.type === "LLM_MATCH_FIELD") {
@@ -70,8 +68,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // ---- Google OAuth ----
-
   if (message.type === "GOOGLE_SIGN_IN") {
     getAuthToken(true)
       .then(() => getGoogleProfile())
@@ -94,11 +90,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "GOOGLE_STATUS") {
-    // interactive=false — never pop a sign-in window just to render the popup.
     getAuthToken(false)
       .then(() => getGoogleProfile())
       .then((profile) => sendResponse({ signedIn: true, email: profile.email }))
       .catch(() => sendResponse({ signedIn: false }));
+    return true;
+  }
+
+  if (message.type === "GMAIL_DIGEST") {
+    // Wrapped in an async IIFE because the listener itself cannot be async:
+    // an async listener returns a Promise, which Chrome reads as "no response
+    // coming" and closes the channel before sendResponse fires.
+    (async () => {
+      try {
+        const messages = await gmailFetchRecent(
+          message.query || "is:unread in:inbox",
+          message.maxResults || 10
+        );
+
+        if (messages.length === 0) {
+          sendResponse({ ok: true, digest: null, count: 0 });
+          return;
+        }
+
+        const digest = await llmInboxDigest(formatMessagesForLLM(messages));
+        sendResponse({ ok: true, digest, count: messages.length });
+      } catch (err) {
+        console.error("[background] GMAIL_DIGEST failed:", err);
+        sendResponse({ ok: false, error: err.message });
+      }
+    })();
     return true;
   }
 });

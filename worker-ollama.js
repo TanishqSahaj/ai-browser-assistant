@@ -70,6 +70,18 @@ export default {
         "PAGE CONTENT:\n" +
         String(input.pageText || "").slice(0, 6000);
       maxTokens = 800;
+    }
+     else if (task === "inbox_digest") {
+      prompt =
+        "You triage email. Below are recent messages. Produce a digest with this exact " +
+        "structure, no markdown, no preamble:\n" +
+        "NEEDS REPLY:\n- sender — one-line reason\n" +
+        "FYI:\n- sender — one-line summary\n" +
+        "IGNORE:\n- sender — one-line reason\n\n" +
+        "Put each message in exactly one section. If a section is empty write 'none'.\n\n" +
+        "MESSAGES:\n" +
+        String(input.messagesText || "").slice(0, 8000);
+      maxTokens = 1000;
     } else {
       return jsonResponse({ error: `Unknown task: ${task}` }, 400, corsHeaders);
     }

@@ -177,3 +177,27 @@ async function llmSummarize(pageText) {
   if (error) return null;
   return result || null;
 }
+
+function buildInboxDigestPrompt(messagesText) {
+  return (
+    "You triage email. Below are recent messages. Produce a digest with this exact " +
+    "structure, no markdown, no preamble:\n" +
+    "NEEDS REPLY:\n- sender — one-line reason\n" +
+    "FYI:\n- sender — one-line summary\n" +
+    "IGNORE:\n- sender — one-line reason\n\n" +
+    "Put each message in exactly one section. If a section is empty write 'none'.\n\n" +
+    "MESSAGES:\n" +
+    String(messagesText || "").slice(0, 8000)
+  );
+}
+
+async function llmInboxDigest(messagesText) {
+  const { result, error } = await callProvider(
+    "inbox_digest",
+    buildInboxDigestPrompt(messagesText),
+    { messagesText }
+  );
+
+  if (error) return null;
+  return result || null;
+}

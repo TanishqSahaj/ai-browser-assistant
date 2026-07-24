@@ -78,5 +78,9 @@ googleAuthBtn.addEventListener("click", () => {
     }
   );
 });
+document.getElementById("digestBtn").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("digest.html") });
+  window.close();
+});
 
 refreshGoogleStatus();
