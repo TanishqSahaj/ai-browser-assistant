@@ -1,8 +1,8 @@
 // background.js
 // Runs in the background, separately from any webpage.
-// Listens for messages and responds — the pattern every future module reuses.
+// Listens for messages and responds — the pattern every module reuses.
 
-importScripts("llm.js");
+importScripts("llm.js", "auth.js");
 
 console.log("[background] service worker started");
 
@@ -67,6 +67,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.error("[background] LLM_SUMMARIZE failed:", err);
         sendResponse({ summary: null });
       });
+    return true;
+  }
+
+  // ---- Google OAuth ----
+
+  if (message.type === "GOOGLE_SIGN_IN") {
+    getAuthToken(true)
+      .then(() => getGoogleProfile())
+      .then((profile) => sendResponse({ ok: true, email: profile.email }))
+      .catch((err) => {
+        console.error("[background] GOOGLE_SIGN_IN failed:", err);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (message.type === "GOOGLE_SIGN_OUT") {
+    signOutGoogle()
+      .then((ok) => sendResponse({ ok }))
+      .catch((err) => {
+        console.error("[background] GOOGLE_SIGN_OUT failed:", err);
+        sendResponse({ ok: false });
+      });
+    return true;
+  }
+
+  if (message.type === "GOOGLE_STATUS") {
+    // interactive=false — never pop a sign-in window just to render the popup.
+    getAuthToken(false)
+      .then(() => getGoogleProfile())
+      .then((profile) => sendResponse({ signedIn: true, email: profile.email }))
+      .catch(() => sendResponse({ signedIn: false }));
     return true;
   }
 });

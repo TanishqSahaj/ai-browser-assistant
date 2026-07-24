@@ -1,15 +1,27 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxAAizVaRqD2T1KGy5QIXyo04lCQrWHRCisNvg1TzKFULq2C3uPl8TRrII4WZGdoKT1q/3pT4IsocLbDM5aRrK6pWik1UNT9E8JoI+g+jA4RnF9DGM+FTAqmasGU2MuCyWnz9iJRnrQOcM+rFR4gd5YNHTx22b7RkR5XijDmD5Om1b2obYit0/io7AZTkr+XitnmJXBEt+pzawl8w6yC9Mvxr6kmSZOTVQHvjvU0cT1QfH6DBla5oD0vEYoNPeEXGjEf2Di8BeiucjOR7A7dQ45Vx7hQqvHOE2aohYhe2uyX5afIOWoaMauWc9mBo5VTm1lZpqcqOU4GgSWUN2A3aOwIDAQAB",
   "name": "AI Browser Assistant",
   "version": "0.1.0",
-  "description": "Phase 4 - LLM integration (local Ollama, Ollama Cloud, or Hugging Face).",
+  "description": "Form filling, summarization, and Gmail/Calendar assistance.",
 
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "identity"],
 
   "host_permissions": [
     "http://localhost:11434/*",
-    "https://*.workers.dev/*"
+    "https://*.workers.dev/*",
+    "https://www.googleapis.com/*"
   ],
+
+  "oauth2": {
+    "client_id": "1029335278060-m33q1k0ju2lt3bt3fo5rnm43b4lftl13.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.send",
+      "https://www.googleapis.com/auth/calendar.events"
+    ]
+  },
 
   "background": {
     "service_worker": "background.js"

@@ -1,6 +1,6 @@
 // popup.js
-// Runs when the popup window is open. SCAN_FORM and SUMMARIZE_PAGE go
-// straight to the tab's content script; PING goes via the background worker.
+// Runs when the popup window is open. Page actions go straight to the tab's
+// content script; PING and all Google auth go via the background worker.
 
 // Both page actions do the same thing apart from the message type, so they
 // share one helper.
@@ -42,3 +42,41 @@ document.getElementById("pingBtn").addEventListener("click", () => {
     resultDiv.textContent = `Title: "${response.title}"\nURL: ${response.url}`;
   });
 });
+
+// ---- Google account status ----
+const googleStatusEl = document.getElementById("googleStatus");
+const googleAuthBtn = document.getElementById("googleAuthBtn");
+
+function refreshGoogleStatus() {
+  chrome.runtime.sendMessage({ type: "GOOGLE_STATUS" }, (response) => {
+    if (response && response.signedIn) {
+      googleStatusEl.textContent = `Connected: ${response.email}`;
+      googleAuthBtn.textContent = "Disconnect Google";
+      googleAuthBtn.dataset.mode = "out";
+    } else {
+      googleStatusEl.textContent = "Not connected to Google";
+      googleAuthBtn.textContent = "Connect Google";
+      googleAuthBtn.dataset.mode = "in";
+    }
+  });
+}
+
+googleAuthBtn.addEventListener("click", () => {
+  const signingOut = googleAuthBtn.dataset.mode === "out";
+  googleStatusEl.textContent = signingOut ? "Disconnecting…" : "Opening Google sign-in…";
+
+  chrome.runtime.sendMessage(
+    { type: signingOut ? "GOOGLE_SIGN_OUT" : "GOOGLE_SIGN_IN" },
+    (response) => {
+      if (!response || !response.ok) {
+        googleStatusEl.textContent = response?.error
+          ? `Failed: ${response.error}`
+          : "Failed — check the service worker console.";
+        return;
+      }
+      refreshGoogleStatus();
+    }
+  );
+});
+
+refreshGoogleStatus();

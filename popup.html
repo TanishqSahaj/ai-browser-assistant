@@ -26,6 +26,17 @@
       color: #333;
       word-break: break-all;
     }
+    #googleStatus {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    hr {
+      margin: 14px 0;
+      border: none;
+      border-top: 1px solid #eee;
+    }
   </style>
 </head>
 <body>
@@ -35,7 +46,11 @@
   <button id="pingBtn" style="background:#eee; color:#333;">Get current page title</button>
   <div id="result">Pick an action →</div>
 
-  <hr style="margin: 14px 0; border: none; border-top: 1px solid #eee;" />
+  <hr />
+  <div id="googleStatus">Checking Google…</div>
+  <button id="googleAuthBtn" style="background:#eee; color:#333;">Connect Google</button>
+
+  <hr />
   <a href="#" id="openProfile" style="font-size: 12px;">Edit my profile →</a>
 
   <script src="popup.js"></script>
