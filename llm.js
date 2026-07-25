@@ -201,3 +201,35 @@ async function llmInboxDigest(messagesText) {
   if (error) return null;
   return result || null;
 }
+
+function buildParseEventPrompt(text, nowISO, timeZone) {
+  return (
+    "You convert a natural-language scheduling request into a Google Calendar event.\n" +
+    "Respond with ONLY a JSON object, no markdown, no code fences, no explanation.\n\n" +
+    "Shape:\n" +
+    '{"summary":"title","location":"place or empty string",' +
+    '"description":"detail or empty string",' +
+    '"start":{"dateTime":"ISO8601 with offset","timeZone":"IANA zone"},' +
+    '"end":{"dateTime":"ISO8601 with offset","timeZone":"IANA zone"}}\n\n' +
+    "Rules:\n" +
+    "- Resolve relative dates against the current time given below.\n" +
+    "- If no duration is stated, make the event 1 hour.\n" +
+    "- If no time is stated, use 09:00 local.\n" +
+    "- Use the user's timezone for both dateTime offset and timeZone.\n\n" +
+    `Current time: ${nowISO}\n` +
+    `User timezone: ${timeZone}\n` +
+    `Request: "${text}"\n\n` +
+    "JSON:"
+  );
+}
+
+async function llmParseEvent(text, nowISO, timeZone) {
+  const { result, error } = await callProvider(
+    "parse_event",
+    buildParseEventPrompt(text, nowISO, timeZone),
+    { text, nowISO, timeZone }
+  );
+
+  if (error) return null;
+  return result || null;
+}

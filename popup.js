@@ -83,4 +83,9 @@ document.getElementById("digestBtn").addEventListener("click", () => {
   window.close();
 });
 
+document.getElementById("calendarBtn").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("calendar.html") });
+  window.close();
+});
+
 refreshGoogleStatus();

@@ -70,8 +70,7 @@ export default {
         "PAGE CONTENT:\n" +
         String(input.pageText || "").slice(0, 6000);
       maxTokens = 800;
-    }
-     else if (task === "inbox_digest") {
+    } else if (task === "inbox_digest") {
       prompt =
         "You triage email. Below are recent messages. Produce a digest with this exact " +
         "structure, no markdown, no preamble:\n" +
@@ -82,7 +81,27 @@ export default {
         "MESSAGES:\n" +
         String(input.messagesText || "").slice(0, 8000);
       maxTokens = 1000;
-    } else {
+    } else if (task === "parse_event") {
+      prompt =
+        "You convert a natural-language scheduling request into a Google Calendar event.\n" +
+        "Respond with ONLY a JSON object, no markdown, no code fences, no explanation.\n\n" +
+        "Shape:\n" +
+        '{"summary":"title","location":"place or empty string",' +
+        '"description":"detail or empty string",' +
+        '"start":{"dateTime":"ISO8601 with offset","timeZone":"IANA zone"},' +
+        '"end":{"dateTime":"ISO8601 with offset","timeZone":"IANA zone"}}\n\n' +
+        "Rules:\n" +
+        "- Resolve relative dates against the current time given below.\n" +
+        "- If no duration is stated, make the event 1 hour.\n" +
+        "- If no time is stated, use 09:00 local.\n" +
+        "- Use the user's timezone for both dateTime offset and timeZone.\n\n" +
+        `Current time: ${input.nowISO}\n` +
+        `User timezone: ${input.timeZone}\n` +
+        `Request: "${input.text}"\n\n` +
+        "JSON:";
+      maxTokens = 600;
+    }
+    else {
       return jsonResponse({ error: `Unknown task: ${task}` }, 400, corsHeaders);
     }
 
