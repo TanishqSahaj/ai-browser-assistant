@@ -197,4 +197,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
+  // ---- Orchestrator ----
+
+  if (message.type === "PLAN_ACTIONS") {
+    (async () => {
+      try {
+        const raw = await llmPlanActions(message.text);
+        if (!raw) {
+          sendResponse({ ok: false, error: "Planner returned nothing" });
+          return;
+        }
+
+        // Same defensive parse as the calendar event JSON — models wrap
+        // arrays in fences or add a sentence before them.
+        const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const first = cleaned.indexOf("[");
+        const last = cleaned.lastIndexOf("]");
+        if (first === -1 || last === -1) {
+          sendResponse({ ok: false, error: "Could not find a JSON array in planner output", raw });
+          return;
+        }
+
+        let plan;
+        try {
+          plan = JSON.parse(cleaned.slice(first, last + 1));
+        } catch (err) {
+          sendResponse({ ok: false, error: "Planner output was not valid JSON", raw });
+          return;
+        }
+
+        if (!Array.isArray(plan)) {
+          sendResponse({ ok: false, error: "Planner output was not an array", raw });
+          return;
+        }
+
+        sendResponse({ ok: true, plan });
+      } catch (err) {
+        console.error("[background] PLAN_ACTIONS failed:", err);
+        sendResponse({ ok: false, error: err.message });
+      }
+    })();
+    return true;
+  }
 });

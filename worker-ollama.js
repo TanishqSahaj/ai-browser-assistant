@@ -101,6 +101,25 @@ export default {
         "JSON:";
       maxTokens = 600;
     }
+     else if (task === "plan_actions") {
+      prompt =
+        "You are a command router. Turn the user's request into an ordered list of actions.\n" +
+        "Respond with ONLY a JSON array, no markdown, no code fences, no explanation.\n\n" +
+        "Available actions:\n" +
+        '- {"action":"fill_form"} — fill the form on the current page\n' +
+        '- {"action":"summarize_page"} — summarize the current page\n' +
+        '- {"action":"inbox_digest"} — triage recent unread email\n' +
+        '- {"action":"create_event","text":"the scheduling phrase"} — add a calendar event\n' +
+        '- {"action":"list_events"} — show upcoming calendar events\n\n' +
+        "Rules:\n" +
+        "- Include only actions the user actually asked for.\n" +
+        "- Preserve the order implied by the request.\n" +
+        "- For create_event, copy the relevant scheduling phrase into text verbatim.\n" +
+        "- If nothing matches, return [].\n\n" +
+        `Request: "${input.text}"\n\n` +
+        "JSON array:";
+      maxTokens = 500;
+    }
     else {
       return jsonResponse({ error: `Unknown task: ${task}` }, 400, corsHeaders);
     }

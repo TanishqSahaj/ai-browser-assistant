@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Command</title>
+  <style>
+    body { font-family: -apple-system, Arial, sans-serif; max-width: 640px; margin: 40px auto; color: #222; padding: 0 20px; }
+    body { font-family: -apple-system, Arial, sans-serif; width: 320px; margin: 0; color: #222; padding: 16px; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.sub { color: #666; font-size: 13px; margin-top: 0; }
+    textarea { width: 100%; padding: 10px; font-size: 14px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+    button { padding: 10px 18px; font-size: 14px; cursor: pointer; border: none; border-radius: 4px; background: #4f46e5; color: white; margin-top: 10px; }
+    button.secondary { background: #eee; color: #333; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .step { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: #fafafa; }
+    .step-head { display: flex; justify-content: space-between; align-items: center; }
+    .step-action { font-weight: 600; font-size: 14px; }
+    .step-status { font-size: 12px; }
+    .step-detail { font-size: 12px; color: #666; margin-top: 6px; white-space: pre-wrap; }
+    .pending { color: #999; }
+    .running { color: #d97706; }
+    .done { color: #16a34a; }
+    .failed { color: #dc2626; }
+    .needs-confirm { color: #7c3aed; }
+    #examples { font-size: 12px; color: #888; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Command</h1>
+  <p class="sub">Describe what you want. One sentence can trigger several modules.</p>
+
+  <textarea id="command" rows="3" placeholder="summarize this page and add a meeting with the recruiter next Wednesday at 3pm"></textarea>
+  <div id="examples">Try: "give me my inbox digest and show my upcoming events" · "fill this form" · "add lunch with Sam on Friday at noon"</div>
+  <div>
+    <button id="planBtn">Plan &amp; Run</button>
+  </div>
+
+  <div id="plan"></div>
+
+  <script src="command-page.js"></script>
+</body>
+</html>

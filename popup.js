@@ -88,4 +88,8 @@ document.getElementById("calendarBtn").addEventListener("click", () => {
   window.close();
 });
 
+document.getElementById("commandBtn").addEventListener("click", () => {
+  window.location.href = "command.html";
+});
+
 refreshGoogleStatus();

@@ -1,4 +1,4 @@
-// content.js
+﻿// content.js
 // Module 1 (Form Filling) + Module 3 (Page Summarization).
 // Scans the page for form fields, matches them against the saved profile,
 // shows a floating preview panel, and fills the form on approval.
@@ -17,6 +17,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SUMMARIZE_PAGE") {
     summarizeAndShowOverlay();
     sendResponse({ started: true });
+  }
+  if (message.type === "SUMMARIZE_PAGE_TEXT") {
+    (async () => {
+      const pageText = extractPageText();
+      if (pageText.length < 100) {
+        sendResponse({ summary: null });
+        return;
+      }
+      try {
+        const response = await chrome.runtime.sendMessage({ type: "LLM_SUMMARIZE", pageText });
+        sendResponse({ summary: response ? response.summary : null });
+      } catch (err) {
+        console.warn("[content] SUMMARIZE_PAGE_TEXT failed:", err);
+        sendResponse({ summary: null });
+      }
+    })();
+    return true; // async
   }
 });
 
@@ -38,7 +55,7 @@ async function buildFieldPlan() {
   const profile = await getProfile();
   const fields = getFillableFields();
 
-  // The LLM must be able to answer with any key the app understands — not
+  // The LLM must be able to answer with any key the app understands â€” not
   // just the ones the user has filled in so far. Otherwise a correct guess
   // for an empty field gets rejected as invalid.
   const KNOWN_PROFILE_KEYS = [
@@ -50,7 +67,7 @@ async function buildFieldPlan() {
     new Set([...KNOWN_PROFILE_KEYS, ...Object.keys(profile)])
   );
 
-  // Parallel, not sequential — a 20-field form used to mean 20 back-to-back
+  // Parallel, not sequential â€” a 20-field form used to mean 20 back-to-back
   // LLM round trips (~60s of frozen UI). Now they overlap.
   const plan = await Promise.all(
     fields.map(async (el, index) => {
@@ -101,7 +118,7 @@ async function askLLMToMatchField(clueText, profileKeys) {
 // ---- 3. SHOW OVERLAY PANEL ----
 async function scanAndShowOverlay() {
   removeExistingOverlay();
-  showLoadingOverlay("Scanning page…", "Matching fields against your profile.");
+  showLoadingOverlay("Scanning pageâ€¦", "Matching fields against your profile.");
 
   let plan;
   try {
@@ -109,7 +126,7 @@ async function scanAndShowOverlay() {
   } catch (err) {
     console.error("[content] buildFieldPlan failed:", err);
     removeExistingOverlay();
-    alert("AI Browser Assistant: scan failed — check the console.");
+    alert("AI Browser Assistant: scan failed â€” check the console.");
     return;
   }
 
@@ -124,7 +141,7 @@ async function scanAndShowOverlay() {
   overlay.id = "aibrowser-overlay";
 
   overlay.innerHTML = `
-    <h3>Form Preview <span id="aibrowser-close-x">✕</span></h3>
+    <h3>Form Preview <span id="aibrowser-close-x">âœ•</span></h3>
     <div id="aibrowser-field-list"></div>
     <div class="aibrowser-btn-row">
       <button id="aibrowser-cancel-btn">Cancel</button>
@@ -149,10 +166,10 @@ async function scanAndShowOverlay() {
       tagText = "matched";
     } else if (item.matchedKey && item.viaLLM) {
       tagClass = "aibrowser-tag-missing aibrowser-tag-llm";
-      tagText = "AI guess — no data yet";
+      tagText = "AI guess â€” no data yet";
     } else if (item.matchedKey) {
       tagClass = "aibrowser-tag-missing";
-      tagText = "no data — enter below";
+      tagText = "no data â€” enter below";
     } else {
       tagClass = "aibrowser-tag-missing";
       tagText = "unmatched";
@@ -176,8 +193,8 @@ async function scanAndShowOverlay() {
   overlay.querySelector("#aibrowser-fill-btn").addEventListener("click", () => handleFillClick(plan));
 }
 
-// Shared "working…" panel so the LLM round trips don't look like a hang.
-function showLoadingOverlay(title = "Working…", subtitle = "") {
+// Shared "workingâ€¦" panel so the LLM round trips don't look like a hang.
+function showLoadingOverlay(title = "Workingâ€¦", subtitle = "") {
   const loader = document.createElement("div");
   loader.id = "aibrowser-overlay";
   loader.innerHTML = `
@@ -214,7 +231,7 @@ async function handleFillClick(plan) {
 
     setNativeFieldValue(item.element, finalValue);
 
-    // Learn anything the user typed or edited for a known profile key —
+    // Learn anything the user typed or edited for a known profile key â€”
     // including AI-guessed keys that had no stored value yet.
     if (item.matchedKey && finalValue !== item.value) {
       newlyLearnedFields[item.matchedKey] = finalValue;
@@ -270,7 +287,7 @@ async function summarizeAndShowOverlay() {
     return;
   }
 
-  showLoadingOverlay("Summarizing page…", "Sending the page text to the model.");
+  showLoadingOverlay("Summarizing pageâ€¦", "Sending the page text to the model.");
 
   let summary = null;
   try {
@@ -288,7 +305,7 @@ async function summarizeAndShowOverlay() {
   const overlay = document.createElement("div");
   overlay.id = "aibrowser-overlay";
   overlay.innerHTML = `
-    <h3>Page Summary <span id="aibrowser-close-x">✕</span></h3>
+    <h3>Page Summary <span id="aibrowser-close-x">âœ•</span></h3>
     <div id="aibrowser-summary-body"></div>
     <div class="aibrowser-btn-row">
       <button id="aibrowser-copy-btn">Copy</button>
@@ -297,11 +314,11 @@ async function summarizeAndShowOverlay() {
   `;
   document.body.appendChild(overlay);
 
-  // Set as text, not innerHTML — the summary is model output going onto an
+  // Set as text, not innerHTML â€” the summary is model output going onto an
   // arbitrary page, so it never gets parsed as markup.
   overlay.querySelector("#aibrowser-summary-body").innerText = summary
     ? summary
-    : "Could not generate a summary — check the service worker console.";
+    : "Could not generate a summary â€” check the service worker console.";
 
   overlay.querySelector("#aibrowser-close-x").addEventListener("click", removeExistingOverlay);
   overlay.querySelector("#aibrowser-cancel-btn").addEventListener("click", removeExistingOverlay);

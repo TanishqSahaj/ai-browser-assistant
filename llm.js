@@ -233,3 +233,34 @@ async function llmParseEvent(text, nowISO, timeZone) {
   if (error) return null;
   return result || null;
 }
+
+function buildPlanActionsPrompt(text) {
+  return (
+    "You are a command router. Turn the user's request into an ordered list of actions.\n" +
+    "Respond with ONLY a JSON array, no markdown, no code fences, no explanation.\n\n" +
+    "Available actions:\n" +
+    '- {"action":"fill_form"} — fill the form on the current page\n' +
+    '- {"action":"summarize_page"} — summarize the current page\n' +
+    '- {"action":"inbox_digest"} — triage recent unread email\n' +
+    '- {"action":"create_event","text":"the scheduling phrase"} — add a calendar event\n' +
+    '- {"action":"list_events"} — show upcoming calendar events\n\n' +
+    "Rules:\n" +
+    "- Include only actions the user actually asked for.\n" +
+    "- Preserve the order implied by the request.\n" +
+    "- For create_event, copy the relevant scheduling phrase into text verbatim.\n" +
+    "- If nothing matches, return [].\n\n" +
+    `Request: "${text}"\n\n` +
+    "JSON array:"
+  );
+}
+
+async function llmPlanActions(text) {
+  const { result, error } = await callProvider(
+    "plan_actions",
+    buildPlanActionsPrompt(text),
+    { text }
+  );
+
+  if (error) return null;
+  return result || null;
+}
